@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: manifests-test-job
+  namespace: pachyderm-redhat
+  labels:
+    app:  manifests-test-job
+    test: osd-e2e-test
+spec:
+  backoffLimit: 2
+  completions: 1
+  template:
+    metadata:
+      name: manifests-test-pod
+    spec:
+      containers:
+      - command:
+        - /bin/sh
+        - -c
+        - $HOME/peak/installandtest.sh
+        env:
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        - name: TEST_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: ARTIFACT_DIR
+          value: /tmp/artifacts 
+        image: quay.io/jooholee/pachyderm-operator-manifests:latest
+        name: manifests-test
+        resources: {}
+        volumeMounts:
+        - mountPath: /tmp/artifacts
+          name: artifacts
+      volumes:
+      - emptyDir: {}
+        name: artifacts
+      restartPolicy: Never
+      serviceAccountName: pachyderm-operator-manifests-sa
